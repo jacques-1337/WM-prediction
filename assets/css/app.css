@@ -26,12 +26,16 @@ body { -webkit-tap-highlight-color: transparent; }
 /* Gruppen-Karten */
 .grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .25rem; border-top: 1px solid #f1f5f9; }
 .grp-row:first-child { border-top: 0; }
-.rankbtn {
-  width: 1.6rem; height: 1.6rem; border: 1px solid #cbd5e1; border-radius: .35rem;
-  background: #fff; line-height: 1; cursor: pointer; font-size: .8rem; color: #334155;
+/* Drag & Drop zum Sortieren der Gruppen */
+.grp-list { display: flex; flex-direction: column; }
+.drag-handle {
+  cursor: grab; color: #94a3b8; font-size: 1.05rem; line-height: 1;
+  padding: 0 .2rem; user-select: none; touch-action: none;
 }
-.rankbtn:hover { background: #f1f5f9; }
-.rankbtn:disabled { opacity: .3; cursor: default; }
+.drag-handle:active { cursor: grabbing; }
+.grp-row.sortable-ghost { opacity: .35; background: #dbeafe; }
+.grp-row.sortable-chosen { background: #eff6ff; }
+.grp-row.sortable-drag { box-shadow: 0 6px 16px rgba(0,0,0,.15); background: #fff; border-radius: .4rem; }
 
 /* Flaggen */
 img.flag { height: 1.1rem; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }

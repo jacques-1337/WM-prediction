@@ -51,7 +51,7 @@ window.BracketEditor = (function () {
       ]));
       groupsWrap.appendChild(el("p", { class: "text-sm text-slate-500 mb-4",
         text: state.readOnly ? "Getippte Endplatzierung der Gruppen."
-          : "Sortiere jede Gruppe per ▲▼ auf die getippte Endplatzierung. Hake bei den Gruppen­dritten an, wer als einer der 8 besten Dritten weiterkommt." }));
+          : "Ziehe die Teams am Griff ⠿ in die getippte Reihenfolge (1.–4.). Hake bei den Gruppen­dritten an, wer als einer der 8 besten Dritten weiterkommt." }));
       const grid = el("div", { class: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" });
       WM.GROUP_LETTERS.forEach((g) => grid.appendChild(groupCard(g)));
       groupsWrap.appendChild(grid);
@@ -70,39 +70,44 @@ window.BracketEditor = (function () {
       const arr = state.payload.groups[g];
       const card = el("div", { class: "rounded-xl border border-slate-200 bg-white p-3 shadow-sm" });
       card.appendChild(el("div", { class: "font-bold text-slate-700 mb-1", text: "Gruppe " + g }));
-      arr.forEach((code, idx) => {
-        const row = el("div", { class: "grp-row" });
-        row.appendChild(el("span", { class: "w-5 text-slate-400 text-sm font-semibold", text: (idx + 1) + "." }));
-        row.appendChild(flagImg(code));
-        row.appendChild(el("span", { class: "flex-1 text-sm truncate", text: WM.teamName(code) }));
-        if (!state.readOnly) {
-          const up = el("button", { class: "rankbtn", title: "nach oben", text: "▲", onClick: () => move(g, idx, -1) });
-          const dn = el("button", { class: "rankbtn", title: "nach unten", text: "▼", onClick: () => move(g, idx, 1) });
-          if (idx === 0) up.disabled = true;
-          if (idx === arr.length - 1) dn.disabled = true;
-          row.appendChild(up); row.appendChild(dn);
-        }
-        if (idx === 2) {
-          if (state.readOnly) {
-            const adv = (state.payload.thirds || []).indexOf(code) !== -1;
-            row.appendChild(el("span", { class: "text-xs font-semibold " + (adv ? "text-emerald-600" : "text-slate-300"), text: adv ? "weiter ✓" : "raus" }));
-          } else {
-            const cb = el("input", { type: "checkbox", class: "w-4 h-4 accent-blue-600 ml-1", title: "kommt als bester Dritter weiter" });
-            cb.checked = (state.payload.thirds || []).indexOf(code) !== -1;
-            cb.addEventListener("change", () => toggleThird(code, cb));
-            row.appendChild(cb);
-          }
-        }
-        card.appendChild(row);
-      });
+      const list = el("div", { class: "grp-list", "data-grp": g });
+      arr.forEach((code, idx) => list.appendChild(groupRow(g, code, idx)));
+      card.appendChild(list);
+      if (!state.readOnly && window.Sortable) {
+        window.Sortable.create(list, {
+          handle: ".drag-handle", draggable: ".grp-row", animation: 150,
+          ghostClass: "sortable-ghost", chosenClass: "sortable-chosen", dragClass: "sortable-drag",
+          onEnd: () => applyOrder(g, list),
+        });
+      }
       return card;
     }
 
-    function move(g, idx, dir) {
-      const arr = state.payload.groups[g];
-      const j = idx + dir;
-      if (j < 0 || j >= arr.length) return;
-      const tmp = arr[idx]; arr[idx] = arr[j]; arr[j] = tmp;
+    function groupRow(g, code, idx) {
+      const row = el("div", { class: "grp-row", "data-code": code });
+      row.appendChild(el("span", { class: "w-5 text-slate-400 text-sm font-semibold", text: (idx + 1) + "." }));
+      if (!state.readOnly) row.appendChild(el("span", { class: "drag-handle", title: "ziehen zum Sortieren", text: "⠿" }));
+      row.appendChild(flagImg(code));
+      row.appendChild(el("span", { class: "flex-1 text-sm truncate", text: WM.teamName(code) }));
+      if (idx === 2) {
+        if (state.readOnly) {
+          const adv = (state.payload.thirds || []).indexOf(code) !== -1;
+          row.appendChild(el("span", { class: "text-xs font-semibold " + (adv ? "text-emerald-600" : "text-slate-300"), text: adv ? "weiter ✓" : "raus" }));
+        } else {
+          const cb = el("input", { type: "checkbox", class: "w-4 h-4 accent-blue-600 ml-1", title: "kommt als bester Dritter weiter" });
+          cb.checked = (state.payload.thirds || []).indexOf(code) !== -1;
+          cb.addEventListener("change", () => toggleThird(code, cb));
+          row.appendChild(cb);
+        }
+      }
+      return row;
+    }
+
+    // Liest die neue Reihenfolge aus dem DOM (nach dem Ziehen) und übernimmt sie.
+    function applyOrder(g, list) {
+      const codes = Array.prototype.slice.call(list.querySelectorAll(".grp-row"))
+        .map((r) => r.getAttribute("data-code"));
+      if (codes.length === 4) state.payload.groups[g] = codes;
       reconcileThirds();
       commit(true);
     }
