@@ -5,27 +5,78 @@
 html { scroll-behavior: smooth; }
 body { -webkit-tap-highlight-color: transparent; }
 
-/* Bracket: horizontale Runden-Spalten */
+/* Bracket-Container (horizontal scrollbar) */
 .ko-scroller { overflow-x: auto; padding-bottom: .5rem; }
-.ko-track { display: flex; gap: 1.25rem; min-width: max-content; align-items: flex-start; }
-.ko-col { display: flex; flex-direction: column; gap: .75rem; min-width: 220px; }
+
+/* ===== Turnierbaum (FOMOB-Stil): symmetrisch, Finale + Pokal in der Mitte ===== */
+.ko-legend { display: flex; gap: 1.1rem; font-size: .75rem; color: #475569; margin-bottom: .55rem; }
+.ko-legend .lg-win { color: #15803d; font-weight: 600; }
+.ko-legend .lg-lose { color: #b91c1c; font-weight: 600; }
+
+.ko-tree {
+  --th: 660px;                       /* Gesamthöhe des Baums (steuert die Linien) */
+  --bh: calc(var(--th) - 26px);      /* Höhe der Match-Bereiche (ohne Titelzeile)  */
+  --line: #cbd5e1;
+  display: flex; align-items: stretch; min-width: max-content; padding: 2px 2px 8px;
+}
+@media (min-width: 1024px) { .ko-tree { --th: 780px; } }
+
+.ko-tree .col { display: flex; flex-direction: column; }
+.col-title {
+  height: 26px; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: #64748b; white-space: nowrap;
+}
+.col-body { height: var(--bh); display: flex; flex-direction: column; justify-content: space-around; }
+.round-col { min-width: 150px; padding: 0 3px; }
+.conn-col { width: 26px; }
+.center-col { min-width: 170px; padding: 0 6px; }
+
+/* Verbinder-Klammer – linke Seite: Zubringer links, Ziel rechts */
+.conn { position: relative; width: 100%; }
+.conn::before, .conn::after { content: ""; position: absolute; left: -4px; right: 50%; }
+.conn::before { top: 0;   height: 50%; border-top: 2px solid var(--line);    border-right: 2px solid var(--line); }
+.conn::after  { top: 50%; height: 50%; border-bottom: 2px solid var(--line); border-right: 2px solid var(--line); }
+.conn .out    { position: absolute; top: 50%; left: 50%; right: -2px; height: 0; border-top: 2px solid var(--line); }
+/* gespiegelt – rechte Seite: Zubringer rechts, Ziel links */
+.conn.mirror::before, .conn.mirror::after { left: 50%; right: -4px; border-right: none; border-left: 2px solid var(--line); }
+.conn.mirror .out { left: -2px; right: 50%; }
+
+/* gerade Linie Halbfinale -> Finale */
+.col-body.straight { justify-content: center; }
+.col-body.straight .hline { height: 0; border-top: 2px solid var(--line); width: 100%; }
+
+/* Mitte: Pokal + Finale + Weltmeister */
+.center-body { justify-content: center; align-items: center; gap: .6rem; }
+.center-body .trophy { font-size: 2rem; line-height: 1; }
+.center-body .match { width: 100%; }
+.center-body .champ { font-weight: 800; color: #94a3b8; font-size: .95rem; text-align: center; }
+.center-body .champ.on { color: #15803d; }
 
 /* Match-Karte */
 .match { border: 1px solid #e2e8f0; border-radius: .6rem; overflow: hidden; background: #fff; }
 .team-row {
   display: flex; align-items: center; gap: .5rem;
-  padding: .5rem .6rem; cursor: pointer; user-select: none;
+  padding: .45rem .55rem; cursor: pointer; user-select: none;
   border-top: 1px solid #f1f5f9; transition: background .12s;
 }
 .team-row:first-child { border-top: 0; }
 .team-row:hover:not(.disabled) { background: #eff6ff; }
-.team-row.winner { background: #dcfce7; font-weight: 600; }
-.team-row.disabled { cursor: default; color: #94a3b8; }
+.team-row.winner { background: #dcfce7; font-weight: 600; }          /* weiter = grün  */
+.team-row.loser  { background: #fee2e2; color: #b91c1c; }            /* raus   = rot   */
+.team-row.loser .nm { opacity: .85; }
+.team-row.disabled { cursor: default; }
 .team-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-row .mark { font-size: .8rem; font-weight: 700; margin-left: auto; }
+.team-row .mark.win { color: #15803d; }
+.team-row .mark.lose { color: #b91c1c; }
 
 /* Gruppen-Karten */
-.grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .25rem; border-top: 1px solid #f1f5f9; }
+.grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .4rem; border-top: 1px solid #f1f5f9; transition: background .12s; }
 .grp-row:first-child { border-top: 0; }
+/* weiter = grün, raus = rot (linker Balken + leichte Tönung) */
+.grp-row.adv { box-shadow: inset 3px 0 0 #16a34a; background: #f0fdf4; }
+.grp-row.out { box-shadow: inset 3px 0 0 #ef4444; background: #fef2f2; }
 /* Drag & Drop zum Sortieren der Gruppen */
 .grp-list { display: flex; flex-direction: column; }
 .drag-handle {

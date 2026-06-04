@@ -84,7 +84,9 @@ window.BracketEditor = (function () {
     }
 
     function groupRow(g, code, idx) {
-      const row = el("div", { class: "grp-row", "data-code": code });
+      const inThirds = (state.payload.thirds || []).indexOf(code) !== -1;
+      const adv = idx <= 1 || (idx === 2 && inThirds); // 1./2. + gewählter Dritter = weiter
+      const row = el("div", { class: "grp-row " + (adv ? "adv" : "out"), "data-code": code });
       row.appendChild(el("span", { class: "w-5 text-slate-400 text-sm font-semibold", text: (idx + 1) + "." }));
       if (!state.readOnly) row.appendChild(el("span", { class: "drag-handle", title: "ziehen zum Sortieren", text: "⠿" }));
       row.appendChild(flagImg(code));
@@ -123,50 +125,116 @@ window.BracketEditor = (function () {
       commit(true);
     }
 
-    // ---------------- K.-o.-Runden ----------------
+    // ---------------- K.-o.-Runden: symmetrischer Turnierbaum (FOMOB-Stil) -------
+    // Reihenfolge der Spiele je Runde/Seite aus der offiziellen Verdrahtung ableiten,
+    // damit die Verbindungslinien sauber zusammenlaufen (Finale + Pokal in der Mitte).
+    function treeOrder() {
+      const B = WM.BRACKET;
+      function half(sfIdx) {
+        const qf = B.sf[sfIdx].slice();                          // 2 Viertelfinal-Indizes
+        const r16 = []; qf.forEach((q) => B.qf[q].forEach((r) => r16.push(r)));
+        const r32 = []; r16.forEach((r) => B.r16[r].forEach((s) => r32.push(s)));
+        return { sf: [sfIdx], qf: qf, r16: r16, r32: r32 };
+      }
+      const fin = B.final[0];                                     // [sf-links, sf-rechts]
+      return { L: half(fin[0]), R: half(fin[1]) };
+    }
+
+    function legend() {
+      const wrap = el("div", { class: "ko-legend" });
+      wrap.appendChild(el("span", { class: "lg lg-win", text: "● kommt weiter" }));
+      wrap.appendChild(el("span", { class: "lg lg-lose", text: "● scheidet aus" }));
+      return wrap;
+    }
+
     function renderKo() {
       koWrap.innerHTML = "";
       koWrap.appendChild(el("h2", { class: "text-xl font-bold text-slate-800 mb-1", text: "2) K.-o.-Runden" }));
       const thirdsOk = (state.payload.thirds || []).length === 8;
-      koWrap.appendChild(el("p", { class: "text-sm text-slate-500 mb-4",
+      koWrap.appendChild(el("p", { class: "text-sm text-slate-500 mb-2",
         text: state.readOnly ? "Getippter Turnierverlauf bis zum Weltmeister."
-          : (thirdsOk ? "Klicke in jedem Spiel auf den getippten Sieger – er rückt automatisch eine Runde weiter."
+          : (thirdsOk ? "Tippe je Spiel auf das weiterkommende Team – Sieger werden grün, Verlierer rot. Der Finalsieger ist dein Weltmeister."
             : "Hinweis: Wähle oben erst 8 Gruppendritte, dann ist das Sechzehntelfinale komplett besetzt.") }));
+      koWrap.appendChild(legend());
 
       const b = Core.computeBracket(state.payload);
-      const track = el("div", { class: "ko-track" });
-      track.appendChild(koColumn("Sechzehntelfinale", b.r32.map((m) => ({
-        a: m.a, b: m.b, aLabel: m.aLabel, bLabel: m.bLabel, winner: m.winner, pick: (c) => setR32(m.id, c),
-      }))));
-      track.appendChild(koColumn("Achtelfinale", b.r16.map((m, i) => mk(m, "r16", i))));
-      track.appendChild(koColumn("Viertelfinale", b.qf.map((m, i) => mk(m, "qf", i))));
-      track.appendChild(koColumn("Halbfinale", b.sf.map((m, i) => mk(m, "sf", i))));
-      track.appendChild(koColumn("Finale", [{ a: b.final.a, b: b.final.b, winner: b.final.winner, pick: (c) => setChampion(c) }]));
+      const ord = treeOrder();
+
+      const r32Desc = (i) => { const m = b.r32[i]; return { a: m.a, b: m.b, aLabel: m.aLabel, bLabel: m.bLabel, winner: m.winner, pick: (c) => setR32(m.id, c) }; };
+      const rndDesc = (round, i) => { const m = b[round][i]; return { a: m.a, b: m.b, winner: m.winner, pick: (c) => setRound(round, i, c) }; };
+
+      const tree = el("div", { class: "ko-tree" });
+
+      // Runden-Spalte: Titel + gleichmäßig verteilte Match-Karten
+      function roundCol(title, descs) {
+        const col = el("div", { class: "col round-col" });
+        col.appendChild(el("div", { class: "col-title", text: title }));
+        const body = el("div", { class: "col-body" });
+        descs.forEach((d) => body.appendChild(matchCard(d)));
+        col.appendChild(body);
+        return col;
+      }
+      // Verbinder-Spalte: k Klammern, jede so hoch wie der Abstand ihrer beiden Zubringer
+      function connCol(k, mirror) {
+        const col = el("div", { class: "col conn-col" });
+        col.appendChild(el("div", { class: "col-title" }));
+        const body = el("div", { class: "col-body" });
+        for (let i = 0; i < k; i++) {
+          const c = el("div", { class: "conn" + (mirror ? " mirror" : "") });
+          c.style.height = "calc(var(--bh) / " + (2 * k) + ")";
+          c.appendChild(el("div", { class: "out" }));
+          body.appendChild(c);
+        }
+        col.appendChild(body);
+        return col;
+      }
+      // gerade Linie (Halbfinale -> Finale)
+      function straightConn() {
+        const col = el("div", { class: "col conn-col" });
+        col.appendChild(el("div", { class: "col-title" }));
+        const body = el("div", { class: "col-body straight" });
+        body.appendChild(el("div", { class: "hline" }));
+        col.appendChild(body);
+        return col;
+      }
+
+      // linke Hälfte: fließt nach rechts zur Mitte
+      tree.appendChild(roundCol("Sechzehntel", ord.L.r32.map(r32Desc)));
+      tree.appendChild(connCol(4, false));
+      tree.appendChild(roundCol("Achtel", ord.L.r16.map((i) => rndDesc("r16", i))));
+      tree.appendChild(connCol(2, false));
+      tree.appendChild(roundCol("Viertel", ord.L.qf.map((i) => rndDesc("qf", i))));
+      tree.appendChild(connCol(1, false));
+      tree.appendChild(roundCol("Halb", ord.L.sf.map((i) => rndDesc("sf", i))));
+      tree.appendChild(straightConn());
+
+      // Mitte: Pokal + Finale + Weltmeister
+      const center = el("div", { class: "col center-col" });
+      center.appendChild(el("div", { class: "col-title", text: "Finale" }));
+      const cbody = el("div", { class: "col-body center-body" });
+      cbody.appendChild(el("div", { class: "trophy", text: "🏆" }));
+      cbody.appendChild(matchCard({ a: b.final.a, b: b.final.b, winner: b.final.winner, pick: (c) => setChampion(c) }));
+      const champ = state.payload.ko.champion;
+      cbody.appendChild(el("div", { class: "champ" + (champ ? " on" : ""),
+        text: champ ? "🏆 " + WM.teamName(champ) : "Weltmeister?" }));
+      center.appendChild(cbody);
+      tree.appendChild(center);
+
+      // rechte Hälfte: gespiegelt, fließt nach links zur Mitte
+      tree.appendChild(straightConn());
+      tree.appendChild(roundCol("Halb", ord.R.sf.map((i) => rndDesc("sf", i))));
+      tree.appendChild(connCol(1, true));
+      tree.appendChild(roundCol("Viertel", ord.R.qf.map((i) => rndDesc("qf", i))));
+      tree.appendChild(connCol(2, true));
+      tree.appendChild(roundCol("Achtel", ord.R.r16.map((i) => rndDesc("r16", i))));
+      tree.appendChild(connCol(4, true));
+      tree.appendChild(roundCol("Sechzehntel", ord.R.r32.map(r32Desc)));
 
       const scroller = el("div", { class: "ko-scroller" });
-      scroller.appendChild(track);
+      scroller.appendChild(tree);
       koWrap.appendChild(scroller);
-
-      const champ = state.payload.ko.champion;
-      const banner = el("div", { class: "mt-5 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 flex items-center gap-3" });
-      banner.appendChild(el("span", { class: "text-2xl", text: "🏆" }));
-      if (champ) {
-        banner.appendChild(flagImg(champ));
-        banner.appendChild(el("span", { class: "text-lg font-bold text-amber-800", text: "Weltmeister: " + WM.teamName(champ) }));
-      } else {
-        banner.appendChild(el("span", { class: "text-amber-700", text: "Noch kein Weltmeister getippt." }));
-      }
-      koWrap.appendChild(banner);
     }
 
-    function mk(m, round, i) { return { a: m.a, b: m.b, winner: m.winner, pick: (c) => setRound(round, i, c) }; }
-
-    function koColumn(title, matches) {
-      const col = el("div", { class: "ko-col" });
-      col.appendChild(el("div", { class: "text-xs font-bold uppercase tracking-wide text-slate-500", text: title }));
-      matches.forEach((mt) => col.appendChild(matchCard(mt)));
-      return col;
-    }
     function matchCard(mt) {
       const card = el("div", { class: "match" });
       card.appendChild(teamRow(mt, "a"));
@@ -175,12 +243,15 @@ window.BracketEditor = (function () {
     }
     function teamRow(mt, side) {
       const code = mt[side];
-      const isWin = code && mt.winner === code;
-      const row = el("div", { class: "team-row" + (isWin ? " winner" : "") + ((!code || state.readOnly) ? " disabled" : "") });
+      const decided = !!mt.winner;
+      const isWin = code && mt.winner === code;        // weiter -> grün
+      const isLose = code && decided && mt.winner !== code; // raus -> rot
+      const row = el("div", { class: "team-row" + (isWin ? " winner" : "") + (isLose ? " loser" : "") + ((!code || state.readOnly) ? " disabled" : "") });
       if (code) {
         row.appendChild(flagImg(code));
         row.appendChild(el("span", { class: "nm text-sm", text: WM.teamName(code) }));
-        if (isWin) row.appendChild(el("span", { class: "text-emerald-600 text-sm", text: "✓" }));
+        if (isWin) row.appendChild(el("span", { class: "mark win", text: "✓" }));
+        else if (isLose) row.appendChild(el("span", { class: "mark lose", text: "✗" }));
         if (!state.readOnly) row.addEventListener("click", () => mt.pick(code));
       } else {
         row.appendChild(el("span", { class: "nm text-sm italic text-slate-400", text: mt[side + "Label"] || "—" }));
