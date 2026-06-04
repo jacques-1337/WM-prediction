@@ -144,6 +144,7 @@ window.WMCore = (function () {
     const ko = payload.ko;
     const r32 = r32Participants(payload);
     const r32w = WM.R32.map((m) => ko.r32[m.id] || null);
+    r32.forEach((m, i) => { m.winner = r32w[i]; }); // Sieger anhängen -> Grün/Rot schon im Sechzehntelfinale
 
     const r16 = buildRound(WM.BRACKET.r16, r32w, ko.r16);
     const r16w = r16.map((m) => m.winner);
