@@ -84,9 +84,8 @@ window.BracketEditor = (function () {
     }
 
     function groupRow(g, code, idx) {
-      const inThirds = (state.payload.thirds || []).indexOf(code) !== -1;
-      const adv = idx <= 1 || (idx === 2 && inThirds); // 1./2. + gewählter Dritter = weiter
-      const row = el("div", { class: "grp-row " + (adv ? "adv" : "out"), "data-code": code });
+      const cls = idx <= 1 ? "adv" : (idx === 2 ? "third" : "out"); // 1./2.=grün, 3.=gelb, 4.=rot
+      const row = el("div", { class: "grp-row " + cls, "data-code": code });
       row.appendChild(el("span", { class: "w-5 text-slate-400 text-sm font-semibold", text: (idx + 1) + "." }));
       if (!state.readOnly) row.appendChild(el("span", { class: "drag-handle", title: "ziehen zum Sortieren", text: "⠿" }));
       row.appendChild(flagImg(code));

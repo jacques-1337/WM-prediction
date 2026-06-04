@@ -74,9 +74,10 @@ body { -webkit-tap-highlight-color: transparent; }
 /* Gruppen-Karten */
 .grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .4rem; border-top: 1px solid #f1f5f9; transition: background .12s; }
 .grp-row:first-child { border-top: 0; }
-/* weiter = grün, raus = rot (linker Balken + leichte Tönung) */
-.grp-row.adv { box-shadow: inset 3px 0 0 #16a34a; background: #f0fdf4; }
-.grp-row.out { box-shadow: inset 3px 0 0 #ef4444; background: #fef2f2; }
+/* 1./2. = grün (weiter), 3. = gelb (Wackelkandidat), 4. = rot (raus) */
+.grp-row.adv   { box-shadow: inset 3px 0 0 #16a34a; background: #f0fdf4; }
+.grp-row.third { box-shadow: inset 3px 0 0 #eab308; background: #fefce8; }
+.grp-row.out   { box-shadow: inset 3px 0 0 #ef4444; background: #fef2f2; }
 /* Drag & Drop zum Sortieren der Gruppen */
 .grp-list { display: flex; flex-direction: column; }
 .drag-handle {
