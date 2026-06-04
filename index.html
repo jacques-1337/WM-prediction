@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WM 2026 Tippspiel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="assets/css/app.css" />
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <header class="bg-blue-700 text-white">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2 font-extrabold text-lg">
+        <span class="text-2xl">🏆</span> WM 2026 Tippspiel
+      </a>
+      <a href="admin.html" class="text-xs text-blue-100 hover:text-white underline">Admin</a>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-5xl mx-auto px-4 py-8 w-full">
+    <section class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Tippe die Fußball-WM 2026</h1>
+      <p class="text-slate-600 mt-2 max-w-2xl">
+        Fülle dein komplettes Bracket aus – Gruppen, alle K.-o.-Runden bis zum Weltmeister – und
+        miss dich mit deinen Freunden in der Rangliste. Tipps sind bis zum Anpfiff (11. Juni 2026)
+        änderbar und für andere verborgen.
+      </p>
+    </section>
+
+    <div class="grid gap-6 md:grid-cols-2">
+      <!-- Beitreten -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold mb-1">Pool beitreten</h2>
+        <p class="text-sm text-slate-500 mb-4">Du hast einen Code von Freunden? Hier rein.</p>
+        <div id="join-pool-name" class="hidden mb-3 text-sm font-semibold text-blue-700"></div>
+        <label class="block text-sm font-medium mb-1">Pool-Code</label>
+        <input id="join-code" maxlength="6" placeholder="z. B. BNXHEK"
+          class="w-full uppercase tracking-widest font-mono rounded-lg border border-slate-300 px-3 py-2 mb-3" />
+        <label class="block text-sm font-medium mb-1">Dein Name</label>
+        <input id="join-name" maxlength="40" placeholder="Anzeigename"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-4" />
+        <button id="join-btn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2">
+          Beitreten & tippen
+        </button>
+      </div>
+
+      <!-- Anlegen -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-lg font-bold mb-1">Neuen Pool anlegen</h2>
+        <p class="text-sm text-slate-500 mb-4">Starte eine eigene Tipprunde und lade Freunde ein.</p>
+        <label class="block text-sm font-medium mb-1">Name der Tipprunde</label>
+        <input id="create-name" maxlength="60" placeholder="z. B. Familie Berg WM-Tippen"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-4" />
+        <button id="create-btn"
+          class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-4 py-2">
+          Pool erstellen
+        </button>
+        <div id="create-result" class="hidden mt-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm"></div>
+      </div>
+    </div>
+
+    <!-- Meine Tipps -->
+    <section class="mt-10">
+      <h2 class="text-lg font-bold mb-3">Meine Tipps</h2>
+      <div id="my-list" class="grid gap-3 sm:grid-cols-2"></div>
+      <p id="my-empty" class="text-sm text-slate-500 hidden">Noch keine Teilnahme – tritt oben einem Pool bei.</p>
+    </section>
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 py-6">
+    WM-2026-Tippspiel · Daten ohne Gewähr · läuft auf Supabase
+  </footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/common.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/index.js"></script>
+</body>
+</html>

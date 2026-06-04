@@ -1,0 +1,41 @@
+/* app.css – wenige Ergänzungen zu Tailwind (Play-CDN) */
+
+:root { --wm-blue: #1d4ed8; }
+
+html { scroll-behavior: smooth; }
+body { -webkit-tap-highlight-color: transparent; }
+
+/* Bracket: horizontale Runden-Spalten */
+.ko-scroller { overflow-x: auto; padding-bottom: .5rem; }
+.ko-track { display: flex; gap: 1.25rem; min-width: max-content; align-items: flex-start; }
+.ko-col { display: flex; flex-direction: column; gap: .75rem; min-width: 220px; }
+
+/* Match-Karte */
+.match { border: 1px solid #e2e8f0; border-radius: .6rem; overflow: hidden; background: #fff; }
+.team-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .6rem; cursor: pointer; user-select: none;
+  border-top: 1px solid #f1f5f9; transition: background .12s;
+}
+.team-row:first-child { border-top: 0; }
+.team-row:hover:not(.disabled) { background: #eff6ff; }
+.team-row.winner { background: #dcfce7; font-weight: 600; }
+.team-row.disabled { cursor: default; color: #94a3b8; }
+.team-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Gruppen-Karten */
+.grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .25rem; border-top: 1px solid #f1f5f9; }
+.grp-row:first-child { border-top: 0; }
+.rankbtn {
+  width: 1.6rem; height: 1.6rem; border: 1px solid #cbd5e1; border-radius: .35rem;
+  background: #fff; line-height: 1; cursor: pointer; font-size: .8rem; color: #334155;
+}
+.rankbtn:hover { background: #f1f5f9; }
+.rankbtn:disabled { opacity: .3; cursor: default; }
+
+/* Flaggen */
+img.flag { height: 1.1rem; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+
+/* dünne Scrollbar */
+.ko-scroller::-webkit-scrollbar { height: 8px; }
+.ko-scroller::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }

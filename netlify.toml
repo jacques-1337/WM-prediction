@@ -1,0 +1,20 @@
+# Netlify-Konfiguration fuer die statische WM-Prediction-App.
+# Es gibt keinen Build-Schritt (reines HTML/JS), daher wird einfach das
+# Projekt-Root als Veroeffentlichungsverzeichnis ausgeliefert.
+
+[build]
+  publish = "."
+  command = ""
+
+# Sinnvolle Sicherheits-/Cache-Header
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

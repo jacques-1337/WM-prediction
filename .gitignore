@@ -1,0 +1,18 @@
+# Lokale Umgebungs-/Geheimwerte
+.env
+.env.local
+assets/js/config.local.js
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node (nur falls mal CLI-Tools genutzt werden)
+node_modules/
+npm-debug.log*
+
+# Supabase CLI
+.branches/
+.temp/
