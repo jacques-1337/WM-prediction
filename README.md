@@ -90,6 +90,5 @@ Siehe [DEPLOY.md](DEPLOY.md) (Netlify, an dieses GitHub-Repo gekoppelt).
 
 - Die genauen **Gruppendaten** stammen aus der Auslosung; falls ein Team falsch ist,
   in `data.js` **und** Tabelle `wm_teams` korrigieren.
-- Die Verdrahtung der K.-o.-Runden ab Achtelfinale ist ein sauberer, in sich stimmiger
-  Baum (kein 1:1-Abbild der offiziellen FIFA-Match-Nummern). Für die Wertung irrelevant,
-  da pro Runde gezählt wird, welche Teams sie erreichen.
+- Der Turnierbaum ist vollständig nach dem **offiziellen FIFA-Spielplan** verdrahtet
+  (Sechzehntel-/Achtel-/Viertel-/Halbfinale/Finale, Match 73–104) in `data.js` → `BRACKET`.

@@ -4,11 +4,9 @@
  * Quelle Gruppen: offizielle Auslosung 05.12.2025 (Stand Juni 2026, alle Teams bestätigt).
  * Flaggen: flagcdn.com per ISO-3166-1-alpha-2-Code (Schottland=gb-sct, England=gb-eng).
  *
- * Hinweis zum Turnierbaum: Die R32-Paarungen (Gruppensieger/-zweiter/-dritter) folgen dem
- * offiziellen Schema. Die Verdrahtung der Runden danach (R16 -> Viertel -> Halb -> Finale)
- * ist ein sauberer, in sich stimmiger Baum (kein 1:1-Abbild der FIFA-Match-Nummern). Für die
- * Wertung ist das egal, weil pro Runde gezählt wird, WELCHE Teams sie erreichen.
- * Wer den exakten offiziellen Baum will, ändert nur das BRACKET-Objekt unten.
+ * Turnierbaum: vollständig nach dem OFFIZIELLEN FIFA-Spielplan verdrahtet
+ * (Match 73–88 = Sechzehntelfinale, 89–96 = Achtelfinale, 97–100 = Viertel,
+ * 101/102 = Halbfinale, 104 = Finale). Siehe BRACKET unten.
  */
 window.WM = (function () {
   "use strict";
@@ -107,20 +105,19 @@ window.WM = (function () {
     { id: "R32-16", fifa: 88, a: { r: "D" }, b: { r: "G" } },
   ];
 
-  // ---- Turnierbaum ab Achtelfinale (sauberer Binärbaum) ---------------------
-  // Jede Runde paart die Sieger der vorigen Runde in Reihenfolge.
+  // ---- Turnierbaum ab Achtelfinale: OFFIZIELLE FIFA-Verdrahtung -------------
+  // Indizes verweisen auf die jeweils vorige Runde.
+  // R32-Index i = FIFA-Match (73+i): 0=M73 … 15=M88.
   const BRACKET = {
-    r16:  pairs(16), // 8 Partien aus den 16 R32-Siegern
-    qf:   pairs(8),  // 4 Partien
-    sf:   pairs(4),  // 2 Partien (Halbfinale)
-    final: pairs(2), // 1 Partie (Finale)
+    // Achtelfinale  M89:74/77  M90:73/75  M91:76/78  M92:79/80  M93:83/84  M94:81/82  M95:86/88  M96:85/87
+    r16: [[1, 4], [0, 2], [3, 5], [6, 7], [10, 11], [8, 9], [13, 15], [12, 14]],
+    // Viertelfinale M97:89/90  M98:93/94  M99:91/92  M100:95/96
+    qf: [[0, 1], [4, 5], [2, 3], [6, 7]],
+    // Halbfinale    M101:97/98  M102:99/100
+    sf: [[0, 1], [2, 3]],
+    // Finale        M104:101/102
+    final: [[0, 1]],
   };
-  // pairs(n) -> [[0,1],[2,3],...] : Indizes der vorigen Runde, die sich treffen
-  function pairs(n) {
-    const out = [];
-    for (let i = 0; i < n; i += 2) out.push([i, i + 1]);
-    return out;
-  }
 
   const ROUNDS = [
     { key: "r32",   label: "Sechzehntelfinale", short: "Sechzehntel", teams: 32, count: 16 },
