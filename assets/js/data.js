@@ -140,11 +140,15 @@ window.WM = (function () {
   const LOCK_AT = "2026-06-11T18:00:00Z";
 
   // ---- Punkteregeln (frei editierbar) ---------------------------------------
-  // Wertung pro Runde: WELCHE Teams sie erreichen (Mengenvergleich Tipp vs. Realität).
+  // Gruppenphase: je Team positionsgenau über alle 4 Plätze (1.–4.).
+  //   Rangdifferenz 0 (exakt richtiger Platz)   -> groupExact Punkte
+  //   Rangdifferenz genau 1 (ein Platz daneben) -> groupOff1  Punkte (symmetrisch ±1)
+  //   Rangdifferenz >= 2                         -> 0 Punkte
+  // K.-o.-Phase: WELCHE Teams die Runde erreichen (Mengenvergleich Tipp vs. Realität).
   const SCORING = {
-    groupWinner: 3,   // Gruppensieger korrekt (Platz 1)
-    groupRunnerUp: 2, // Gruppenzweiter korrekt (Platz 2)
-    groupThird: 1,    // weitergekommener Gruppendritter korrekt
+    groupExact: 3,    // Team auf exakt getipptem Gruppenplatz (1=1,2=2,3=3,4=4)
+    groupOff1: 1,     // Team genau 1 Platz daneben (höher ODER tiefer)
+    groupThird: 1,    // je korrekt getipptem weitergekommenen Gruppendritten (+1)
     // "reach": Punkte je korrekt getipptem Team, das diese Runde erreicht.
     // r16 = Achtelfinale, qf = Viertelfinale, sf = Halbfinale, final = Endspiel.
     reach: { r16: 1, qf: 2, sf: 4, final: 6 },

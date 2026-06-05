@@ -1,31 +1,33 @@
 /*
- * store.js – merkt sich lokal (localStorage), an welchen Pools man als wer
- * teilnimmt – inklusive Geheim-Token zum Bearbeiten des eigenen Tipps.
+ * store.js – hält die Anmeldung des globalen Benutzerkontos lokal (localStorage).
+ * Gespeichert wird NUR { token, userId, username } – niemals das Passwort.
+ * Das Session-Token ist ein langlebiger Zufalls-Schlüssel (UUID) aus wm_sessions;
+ * damit holt man sich von jedem Gerät seine Pools, Tipps und Punkte.
  */
-window.Store = (function () {
+window.Auth = (function () {
   "use strict";
-  const KEY = "wm_me_v1";
+  const KEY = "wm_auth_v1";
 
-  function readAll() {
-    try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
-    catch (e) { return []; }
+  function get() {
+    try {
+      const v = JSON.parse(localStorage.getItem(KEY) || "null");
+      return v && v.token ? v : null;
+    } catch (e) { return null; }
   }
-  function writeAll(list) {
-    localStorage.setItem(KEY, JSON.stringify(list));
+  function set(session) {
+    // session: { token, user_id|userId, username }
+    const v = {
+      token: session.token,
+      userId: session.userId || session.user_id || null,
+      username: session.username || null,
+    };
+    localStorage.setItem(KEY, JSON.stringify(v));
+    return v;
   }
+  function clear() { localStorage.removeItem(KEY); }
+  function token() { const v = get(); return v ? v.token : null; }
+  function username() { const v = get(); return v ? v.username : null; }
+  function isLoggedIn() { return !!token(); }
 
-  // entry: { poolId, poolName, participantId, token, displayName, savedAt }
-  function upsert(entry) {
-    const list = readAll().filter((e) => e.token !== entry.token);
-    entry.savedAt = Date.now();
-    list.unshift(entry);
-    writeAll(list);
-    return entry;
-  }
-  function all() { return readAll(); }
-  function byPool(poolId) { return readAll().find((e) => e.poolId === poolId) || null; }
-  function byToken(token) { return readAll().find((e) => e.token === token) || null; }
-  function remove(token) { writeAll(readAll().filter((e) => e.token !== token)); }
-
-  return { upsert, all, byPool, byToken, remove };
+  return { get, set, clear, token, username, isLoggedIn };
 })();

@@ -1,22 +1,36 @@
 /* app.css – wenige Ergänzungen zu Tailwind (Play-CDN) */
 
-:root { --wm-blue: #1d4ed8; }
+:root {
+  --wm-blue: #1d4ed8;
+  /* Dark-Theme-Palette (an Tailwind slate angelehnt) */
+  --bg: #0f172a;          /* slate-900 – Seitenhintergrund */
+  --surface: #1e293b;     /* slate-800 – Karten/Flächen   */
+  --surface-2: #334155;   /* slate-700 – Hover/zweite Ebene */
+  --border: #334155;      /* slate-700 – Ränder            */
+  --text: #e2e8f0;        /* slate-200 – Haupttext         */
+  --text-dim: #94a3b8;    /* slate-400 – gedimmter Text    */
+}
 
 html { scroll-behavior: smooth; }
-body { -webkit-tap-highlight-color: transparent; }
+body {
+  -webkit-tap-highlight-color: transparent;
+  background: var(--bg);
+  color: var(--text);
+  color-scheme: dark;
+}
 
 /* Bracket-Container (horizontal scrollbar) */
 .ko-scroller { overflow-x: auto; padding-bottom: .5rem; }
 
 /* ===== Turnierbaum (FOMOB-Stil): symmetrisch, Finale + Pokal in der Mitte ===== */
-.ko-legend { display: flex; gap: 1.1rem; font-size: .75rem; color: #475569; margin-bottom: .55rem; }
-.ko-legend .lg-win { color: #15803d; font-weight: 600; }
-.ko-legend .lg-lose { color: #b91c1c; font-weight: 600; }
+.ko-legend { display: flex; gap: 1.1rem; font-size: .75rem; color: var(--text-dim); margin-bottom: .55rem; }
+.ko-legend .lg-win { color: #4ade80; font-weight: 600; }
+.ko-legend .lg-lose { color: #f87171; font-weight: 600; }
 
 .ko-tree {
   --th: 660px;                       /* Gesamthöhe des Baums (steuert die Linien) */
   --bh: calc(var(--th) - 26px);      /* Höhe der Match-Bereiche (ohne Titelzeile)  */
-  --line: #cbd5e1;
+  --line: #475569;
   display: flex; align-items: stretch; min-width: max-content; padding: 2px 2px 8px;
 }
 @media (min-width: 1024px) { .ko-tree { --th: 780px; } }
@@ -25,7 +39,7 @@ body { -webkit-tap-highlight-color: transparent; }
 .col-title {
   height: 26px; display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
-  color: #64748b; white-space: nowrap;
+  color: var(--text-dim); white-space: nowrap;
 }
 .col-body { height: var(--bh); display: flex; flex-direction: column; justify-content: space-around; }
 .round-col { min-width: 150px; padding: 0 3px; }
@@ -50,48 +64,93 @@ body { -webkit-tap-highlight-color: transparent; }
 .center-body { justify-content: center; align-items: center; gap: .6rem; }
 .center-body .trophy { font-size: 2rem; line-height: 1; }
 .center-body .match { width: 100%; }
-.center-body .champ { font-weight: 800; color: #94a3b8; font-size: .95rem; text-align: center; }
-.center-body .champ.on { color: #15803d; }
+.center-body .champ { font-weight: 800; color: var(--text-dim); font-size: .95rem; text-align: center; }
+.center-body .champ.on { color: #4ade80; }
 
 /* Match-Karte */
-.match { border: 1px solid #e2e8f0; border-radius: .6rem; overflow: hidden; background: #fff; }
+.match { border: 1px solid var(--border); border-radius: .6rem; overflow: hidden; background: var(--surface); }
 .team-row {
   display: flex; align-items: center; gap: .5rem;
   padding: .45rem .55rem; cursor: pointer; user-select: none;
-  border-top: 1px solid #f1f5f9; transition: background .12s;
+  border-top: 1px solid rgba(148,163,184,.15); transition: background .12s;
 }
 .team-row:first-child { border-top: 0; }
-.team-row:hover:not(.disabled) { background: #eff6ff; }
-.team-row.winner { background: #dcfce7; font-weight: 600; }          /* weiter = grün  */
-.team-row.loser  { background: #fee2e2; color: #b91c1c; }            /* raus   = rot   */
+.team-row:hover:not(.disabled) { background: var(--surface-2); }
+.team-row.winner { background: #14532d; color: #bbf7d0; font-weight: 600; }   /* weiter = grün */
+.team-row.loser  { background: #4c1d1d; color: #fca5a5; }                      /* raus   = rot  */
 .team-row.loser .nm { opacity: .85; }
 .team-row.disabled { cursor: default; }
 .team-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .team-row .mark { font-size: .8rem; font-weight: 700; margin-left: auto; }
-.team-row .mark.win { color: #15803d; }
-.team-row .mark.lose { color: #b91c1c; }
+.team-row .mark.win { color: #4ade80; }
+.team-row .mark.lose { color: #f87171; }
 
 /* Gruppen-Karten */
-.grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .4rem; border-top: 1px solid #f1f5f9; transition: background .12s; }
+.grp-row { display: flex; align-items: center; gap: .5rem; padding: .35rem .4rem; border-top: 1px solid rgba(148,163,184,.15); transition: background .12s; }
 .grp-row:first-child { border-top: 0; }
 /* 1./2. = grün (weiter), 3. = gelb (Wackelkandidat), 4. = rot (raus) */
-.grp-row.adv   { box-shadow: inset 3px 0 0 #16a34a; background: #f0fdf4; }
-.grp-row.third { box-shadow: inset 3px 0 0 #eab308; background: #fefce8; }
-.grp-row.out   { box-shadow: inset 3px 0 0 #ef4444; background: #fef2f2; }
+.grp-row.adv   { box-shadow: inset 3px 0 0 #22c55e; background: rgba(34,197,94,.12); }
+.grp-row.third { box-shadow: inset 3px 0 0 #eab308; background: rgba(234,179,8,.12); }
+.grp-row.out   { box-shadow: inset 3px 0 0 #ef4444; background: rgba(239,68,68,.12); }
 /* Drag & Drop zum Sortieren der Gruppen */
 .grp-list { display: flex; flex-direction: column; }
 .drag-handle {
-  cursor: grab; color: #94a3b8; font-size: 1.05rem; line-height: 1;
+  cursor: grab; color: var(--text-dim); font-size: 1.05rem; line-height: 1;
   padding: 0 .2rem; user-select: none; touch-action: none;
 }
 .drag-handle:active { cursor: grabbing; }
-.grp-row.sortable-ghost { opacity: .35; background: #dbeafe; }
-.grp-row.sortable-chosen { background: #eff6ff; }
-.grp-row.sortable-drag { box-shadow: 0 6px 16px rgba(0,0,0,.15); background: #fff; border-radius: .4rem; }
+.grp-row.sortable-ghost { opacity: .35; background: rgba(59,130,246,.25); }
+.grp-row.sortable-chosen { background: var(--surface-2); }
+.grp-row.sortable-drag { box-shadow: 0 6px 16px rgba(0,0,0,.5); background: var(--surface); border-radius: .4rem; }
 
 /* Flaggen */
-img.flag { height: 1.1rem; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+img.flag { height: 1.1rem; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255,255,255,.15); }
 
 /* dünne Scrollbar */
 .ko-scroller::-webkit-scrollbar { height: 8px; }
-.ko-scroller::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.ko-scroller::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+
+/* ===================================================================== */
+/* Dark-Theme – globale Overrides für die Tailwind-Utility-Klassen,      */
+/* die in den HTML-Seiten (index/bracket/pool/admin) direkt benutzt      */
+/* werden. So wird das ganze Tippspiel ohne HTML-Umbau dunkel.           */
+/* ===================================================================== */
+
+/* Flächen & Hintergründe */
+.bg-slate-50, .bg-white, .bg-white\/95 { background-color: var(--surface) !important; }
+.bg-slate-100, .bg-slate-200 { background-color: var(--surface-2) !important; }
+.hover\:bg-slate-200:hover { background-color: #475569 !important; }
+.border-slate-100 { border-color: var(--border) !important; }
+
+/* Header / sticky Leiste */
+header.bg-blue-700 { background-color: #1e3a8a !important; }
+.border-b.border-slate-200 { border-color: var(--border) !important; }
+
+/* Karten-Ränder */
+.border-slate-200, .border-slate-300 { border-color: var(--border) !important; }
+
+/* Text */
+.text-slate-800, .text-slate-900, .text-slate-700 { color: var(--text) !important; }
+.text-slate-600, .text-slate-500 { color: var(--text-dim) !important; }
+.text-slate-400, .text-slate-300 { color: #64748b !important; }
+
+/* Formularfelder */
+input, select, textarea {
+  background-color: #0f172a !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+input::placeholder, textarea::placeholder { color: #64748b !important; }
+
+/* Akzent-Boxen (Hinweise/Erfolg) auf Dunkel abstimmen */
+.bg-emerald-50 { background-color: rgba(16,185,129,.12) !important; }
+.border-emerald-200 { border-color: rgba(16,185,129,.35) !important; }
+.bg-amber-50 { background-color: rgba(245,158,11,.12) !important; }
+.border-amber-300 { border-color: rgba(245,158,11,.4) !important; }
+.text-amber-800 { color: #fcd34d !important; }
+
+/* Zähler-Badges (beste Dritte) */
+.bg-emerald-100 { background-color: rgba(16,185,129,.18) !important; }
+.text-emerald-700 { color: #6ee7b7 !important; }
+.bg-amber-100 { background-color: rgba(245,158,11,.18) !important; }
+.text-amber-700 { color: #fcd34d !important; }

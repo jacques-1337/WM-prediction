@@ -36,14 +36,22 @@ window.Scoring = (function () {
     const P = Core.ensure(clone(prediction));
     const A = Core.ensure(clone(actual));
 
-    const parts = { groupWinner: 0, groupRunnerUp: 0, groupThird: 0, r16: 0, qf: 0, sf: 0, final: 0, champion: 0 };
+    const parts = { groupPos: 0, groupThird: 0, r16: 0, qf: 0, sf: 0, final: 0, champion: 0 };
 
-    // Gruppenphase (nur eingetragene Gruppen), Platz 1 & 2 positionsgenau
+    // Gruppenphase (nur eingetragene Gruppen): jede Platzierung 1.–4. positionsgenau.
+    // Pro getipptem Team: Rangdifferenz zur Realität. 0 = exakt (groupExact),
+    // genau 1 = ein Platz daneben/symmetrisch (groupOff1), >= 2 = nichts.
     presentGroups.forEach((g) => {
       const pg = P.groups[g] || [];
       const ag = rawGroups[g] || [];
-      if (ag[0] && pg[0] === ag[0]) parts.groupWinner += S.groupWinner;
-      if (ag[1] && pg[1] === ag[1]) parts.groupRunnerUp += S.groupRunnerUp;
+      const actualPos = {}; // code -> realer Index (0=1.,1=2.,2=3.,3=4.)
+      ag.forEach((code, idx) => { if (code) actualPos[code] = idx; });
+      pg.forEach((code, predIdx) => {
+        if (!code || !(code in actualPos)) return;
+        const diff = Math.abs(predIdx - actualPos[code]);
+        if (diff === 0) parts.groupPos += S.groupExact;
+        else if (diff === 1) parts.groupPos += S.groupOff1;
+      });
     });
 
     // weitergekommene Dritte: Schnittmenge
@@ -68,7 +76,7 @@ window.Scoring = (function () {
   function score(prediction, actual) { return scoreDetailed(prediction, actual).total; }
 
   const LABELS = {
-    groupWinner: "Gruppensieger", groupRunnerUp: "Gruppenzweite", groupThird: "Beste Dritte",
+    groupPos: "Gruppen-Platzierung", groupThird: "Beste Dritte",
     r16: "Achtelfinale", qf: "Viertelfinale", sf: "Halbfinale", final: "Finalisten", champion: "Weltmeister",
   };
 

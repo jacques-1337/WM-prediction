@@ -3,8 +3,10 @@
   "use strict";
   const { $, el, toast, copy, getParam, fmtDateTime } = window.UI;
   const Core = window.WMCore;
+  const Auth = window.Auth;
 
-  const token = getParam("token");
+  const token = Auth.token();
+  const poolId = getParam("pool");
   let meta = null;
   let saveTimer = null;
   let lastSavedJSON = "";
@@ -29,7 +31,7 @@
     if (json === lastSavedJSON) { setStatus("Gespeichert ✓", "text-emerald-600"); return; }
     setStatus("Speichere …", "text-slate-400");
     try {
-      await window.DB.savePrediction(token, payload);
+      await window.DB.savePrediction(token, poolId, payload);
       lastSavedJSON = json;
       setStatus("Gespeichert ✓", "text-emerald-600");
     } catch (e) {
@@ -48,26 +50,27 @@
 
   async function init() {
     if (!token) {
-      $("#loading").innerHTML = 'Kein Tipp ausgewählt. <a class="text-blue-600 underline" href="index.html">Zur Startseite</a>.';
+      $("#loading").innerHTML = 'Bitte zuerst <a class="text-blue-600 underline" href="index.html">anmelden</a>.';
+      return;
+    }
+    if (!poolId) {
+      $("#loading").innerHTML = 'Kein Pool ausgewählt. <a class="text-blue-600 underline" href="index.html">Zur Startseite</a>.';
       return;
     }
     try {
-      meta = await window.DB.getMine(token);
+      meta = await window.DB.getMine(token, poolId);
     } catch (e) {
       $("#loading").innerHTML = "Konnte Tipp nicht laden: " + e.message +
         ' <br><a class="text-blue-600 underline" href="index.html">Zur Startseite</a>.';
       return;
     }
 
-    // lokalen Eintrag auffrischen
-    window.Store.upsert({
-      poolId: meta.pool_id, poolName: meta.pool_name, participantId: meta.participant_id,
-      token: token, displayName: meta.display_name,
-    });
-
     $("#head-pool").textContent = meta.pool_name + " · " + meta.display_name;
+    const poolUrl = location.origin + location.pathname.replace(/bracket\.html$/, "pool.html") +
+      "?pool=" + encodeURIComponent(meta.pool_id);
     $("#pool-link").setAttribute("href", "pool.html?pool=" + encodeURIComponent(meta.pool_id));
-    $("#link-btn").addEventListener("click", () => copy(location.href.split("?")[0] + "?token=" + token));
+    // "Pool-Link kopieren" teilt die Pool-/Ranglisten-Seite (der eigene Tipp bleibt privat).
+    $("#link-btn").addEventListener("click", () => copy(poolUrl));
 
     const payload = Core.ensure(meta.payload || Core.emptyPrediction());
     lastSavedJSON = JSON.stringify(payload);

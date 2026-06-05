@@ -147,6 +147,10 @@ window.BracketEditor = (function () {
     }
 
     function renderKo() {
+      // Scroll-Position des Turnierbaums merken, damit der Cursor beim Tippen
+      // (Neu-Rendern nach jedem Klick) nicht zurück nach links/zur Mitte springt.
+      const prevScroller = koWrap.querySelector(".ko-scroller");
+      const prevScroll = prevScroller ? { left: prevScroller.scrollLeft, top: prevScroller.scrollTop } : null;
       koWrap.innerHTML = "";
       koWrap.appendChild(el("h2", { class: "text-xl font-bold text-slate-800 mb-1", text: "2) K.-o.-Runden" }));
       const thirdsOk = (state.payload.thirds || []).length === 8;
@@ -232,6 +236,9 @@ window.BracketEditor = (function () {
       const scroller = el("div", { class: "ko-scroller" });
       scroller.appendChild(tree);
       koWrap.appendChild(scroller);
+
+      // Gemerkte Scroll-Position wiederherstellen (Cursor bleibt auf seiner Seite).
+      if (prevScroll) { scroller.scrollLeft = prevScroll.left; scroller.scrollTop = prevScroll.top; }
     }
 
     function matchCard(mt) {

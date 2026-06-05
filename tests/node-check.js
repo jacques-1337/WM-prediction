@@ -79,7 +79,9 @@ ok(prog.complete, "Voll ausgefüllter Tipp gilt als komplett (" + JSON.stringify
 }) + ")");
 
 // 4) Wertung
-const expectedMax = 12 * 3 + 12 * 2 + 8 * 1 + 16 * 1 + 8 * 2 + 4 * 4 + 2 * 6 + 10; // = 138
+// Gruppen: 12 Gruppen × 4 Plätze exakt × groupExact(3) = 144
+// + Dritte 8×1 + reach r16 16×1, qf 8×2, sf 4×4, final 2×6 (=60) + champion 10
+const expectedMax = 12 * 4 * 3 + 8 * 1 + 16 * 1 + 8 * 2 + 4 * 4 + 2 * 6 + 10; // = 222
 const selfScore = Scoring.score(full, full);
 ok(selfScore === expectedMax, "Identischer Tipp = Maximalpunkte (" + selfScore + " == " + expectedMax + ")");
 
@@ -88,6 +90,26 @@ ok(emptyScore === 0, "Leere Ergebnisse = 0 Punkte (keine Default-Fehlpunkte)");
 
 ok(!Scoring.hasResults({}), "hasResults({}) ist false");
 ok(Scoring.hasResults(full), "hasResults(voller Baum) ist true");
+
+// 4b) Gruppen-Rangdifferenz (symmetrisch ±1): real [0,1,2,3], Tipp tauscht Plätze
+(function () {
+  const A = WM.GROUP_LETTERS[0];
+  const real = WM.GROUPS[A].slice();          // [t0,t1,t2,t3] = reale Reihenfolge
+  const actual = { groups: { [A]: real.slice() } };
+  // Tipp: 1. und 2. getauscht -> beide je 1 Platz daneben (diff 1), 3. und 4. exakt
+  const pred = Core.emptyPrediction();
+  pred.groups[A] = [real[1], real[0], real[2], real[3]];
+  const exp = WM.SCORING.groupOff1 * 2 + WM.SCORING.groupExact * 2; // 1+1+3+3 = 8
+  const got = Scoring.scoreDetailed(pred, actual).parts.groupPos;
+  ok(got === exp, "Rangdifferenz ±1 symmetrisch: getauschte 1./2. = " + got + " (erwartet " + exp + ")");
+
+  // Tipp: 1. und 4. getauscht -> beide diff 3 (>=2 -> 0), 2. und 3. exakt
+  const pred2 = Core.emptyPrediction();
+  pred2.groups[A] = [real[3], real[1], real[2], real[0]];
+  const exp2 = WM.SCORING.groupExact * 2; // nur 2. und 3. exakt = 6
+  const got2 = Scoring.scoreDetailed(pred2, actual).parts.groupPos;
+  ok(got2 === exp2, "Rangdifferenz >=2 gibt 0: getauschte 1./4. = " + got2 + " (erwartet " + exp2 + ")");
+})();
 
 // 5) Normalisierung: ungültiger Sieger wird entfernt, wenn Teilnehmer wechselt
 const p5 = buildWithThirds(["A", "B", "C", "D", "E", "F", "G", "H"]);

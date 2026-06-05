@@ -3,12 +3,13 @@
   "use strict";
   const { $, el, toast, getParam, fmtDateTime } = window.UI;
   const Core = window.WMCore, Scoring = window.Scoring;
+  const Auth = window.Auth;
 
   const poolId = getParam("pool");
 
   function badge(text, cls) { return el("span", { class: "text-xs font-semibold px-2 py-1 rounded-full " + cls, text }); }
 
-  function renderHead(pool, count) {
+  function renderHead(pool, count, iAmParticipant) {
     const head = $("#pool-head");
     head.innerHTML = "";
     head.appendChild(el("h1", { class: "text-2xl font-extrabold text-slate-900", text: pool.name }));
@@ -19,10 +20,9 @@
     meta.appendChild(el("span", { text: "· " + count + " Teilnehmer" }));
     head.appendChild(meta);
 
-    const mine = window.Store.byPool(poolId);
-    if (mine) {
+    if (iAmParticipant) {
       head.appendChild(el("a", {
-        href: "bracket.html?token=" + encodeURIComponent(mine.token),
+        href: "bracket.html?pool=" + encodeURIComponent(poolId),
         class: "inline-block mt-3 text-sm bg-blue-600 text-white rounded px-3 py-1.5",
         text: pool.locked ? "Meinen Tipp ansehen" : "Meinen Tipp bearbeiten",
       }));
@@ -148,7 +148,16 @@
       $("#loading").innerHTML = "Pool konnte nicht geladen werden: " + e.message;
       return;
     }
-    renderHead(pool, participants.length);
+
+    // Nehme ich (eingeloggt) an diesem Pool teil? -> "Meinen Tipp"-Button zeigen
+    let iAmParticipant = false;
+    if (Auth.token()) {
+      try {
+        const mine = await window.DB.myPools(Auth.token());
+        iAmParticipant = !!(mine || []).find((p) => p.pool_id === poolId);
+      } catch (e) { /* nicht eingeloggt/Token abgelaufen – kein Button */ }
+    }
+    renderHead(pool, participants.length, iAmParticipant);
     $("#loading").classList.add("hidden");
 
     if (!pool.locked) { renderPreLock(participants); return; }

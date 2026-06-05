@@ -29,45 +29,80 @@
       </p>
     </section>
 
-    <div class="grid gap-6 md:grid-cols-2">
-      <!-- Beitreten -->
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-bold mb-1">Pool beitreten</h2>
-        <p class="text-sm text-slate-500 mb-4">Du hast einen Code von Freunden? Hier rein.</p>
-        <div id="join-pool-name" class="hidden mb-3 text-sm font-semibold text-blue-700"></div>
-        <label class="block text-sm font-medium mb-1">Pool-Code</label>
-        <input id="join-code" maxlength="6" placeholder="z. B. BNXHEK"
-          class="w-full uppercase tracking-widest font-mono rounded-lg border border-slate-300 px-3 py-2 mb-3" />
-        <label class="block text-sm font-medium mb-1">Dein Name</label>
-        <input id="join-name" maxlength="40" placeholder="Anzeigename"
-          class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-4" />
-        <button id="join-btn"
+    <!-- Anmelden / Registrieren (nur sichtbar wenn NICHT eingeloggt) -->
+    <section id="auth-section" class="hidden mb-8">
+      <div class="max-w-md mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex gap-2 mb-4">
+          <button id="tab-login"
+            class="flex-1 rounded-lg px-3 py-2 text-sm font-semibold bg-blue-600 text-white">Anmelden</button>
+          <button id="tab-register"
+            class="flex-1 rounded-lg px-3 py-2 text-sm font-semibold bg-slate-100 text-slate-700">Konto erstellen</button>
+        </div>
+        <p id="auth-hint" class="text-sm text-slate-500 mb-4">
+          Melde dich an, um deine Tipps und Punkte auf jedem Gerät wiederzufinden.
+        </p>
+        <label class="block text-sm font-medium mb-1">Benutzername</label>
+        <input id="auth-user" maxlength="40" autocomplete="username" placeholder="z. B. jacques"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-3" />
+        <label class="block text-sm font-medium mb-1">Passwort</label>
+        <input id="auth-pw" type="password" autocomplete="current-password" placeholder="mind. 8 Zeichen"
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-3" />
+        <div id="auth-pw2-wrap" class="hidden">
+          <label class="block text-sm font-medium mb-1">Passwort wiederholen</label>
+          <input id="auth-pw2" type="password" autocomplete="new-password" placeholder="Passwort wiederholen"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-3" />
+        </div>
+        <button id="auth-submit"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2">
-          Beitreten & tippen
+          Anmelden
         </button>
       </div>
-
-      <!-- Anlegen -->
-      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-bold mb-1">Neuen Pool anlegen</h2>
-        <p class="text-sm text-slate-500 mb-4">Starte eine eigene Tipprunde und lade Freunde ein.</p>
-        <label class="block text-sm font-medium mb-1">Name der Tipprunde</label>
-        <input id="create-name" maxlength="60" placeholder="z. B. Familie Berg WM-Tippen"
-          class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-4" />
-        <button id="create-btn"
-          class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-4 py-2">
-          Pool erstellen
-        </button>
-        <div id="create-result" class="hidden mt-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm"></div>
-      </div>
-    </div>
-
-    <!-- Meine Tipps -->
-    <section class="mt-10">
-      <h2 class="text-lg font-bold mb-3">Meine Tipps</h2>
-      <div id="my-list" class="grid gap-3 sm:grid-cols-2"></div>
-      <p id="my-empty" class="text-sm text-slate-500 hidden">Noch keine Teilnahme – tritt oben einem Pool bei.</p>
     </section>
+
+    <!-- Eingeloggter Bereich (nur sichtbar wenn eingeloggt) -->
+    <div id="app-section" class="hidden">
+      <div class="flex items-center justify-between mb-6 rounded-xl bg-white border border-slate-200 px-4 py-3 shadow-sm">
+        <div class="text-sm text-slate-600">Angemeldet als <span id="me-name" class="font-bold text-slate-900"></span></div>
+        <button id="logout-btn" class="text-sm bg-slate-100 hover:bg-slate-200 rounded px-3 py-1.5">Abmelden</button>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        <!-- Beitreten -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 class="text-lg font-bold mb-1">Pool beitreten</h2>
+          <p class="text-sm text-slate-500 mb-4">Du hast einen Code von Freunden? Du trittst mit deinem Kontonamen bei.</p>
+          <div id="join-pool-name" class="hidden mb-3 text-sm font-semibold text-blue-700"></div>
+          <label class="block text-sm font-medium mb-1">Pool-Code</label>
+          <input id="join-code" maxlength="6" placeholder="z. B. BNXHEK"
+            class="w-full uppercase tracking-widest font-mono rounded-lg border border-slate-300 px-3 py-2 mb-4" />
+          <button id="join-btn"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2">
+            Beitreten & tippen
+          </button>
+        </div>
+
+        <!-- Anlegen -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 class="text-lg font-bold mb-1">Neuen Pool anlegen</h2>
+          <p class="text-sm text-slate-500 mb-4">Starte eine eigene Tipprunde und lade Freunde ein.</p>
+          <label class="block text-sm font-medium mb-1">Name der Tipprunde</label>
+          <input id="create-name" maxlength="60" placeholder="z. B. Familie Berg WM-Tippen"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 mb-4" />
+          <button id="create-btn"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg px-4 py-2">
+            Pool erstellen
+          </button>
+          <div id="create-result" class="hidden mt-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-sm"></div>
+        </div>
+      </div>
+
+      <!-- Meine Tipps -->
+      <section class="mt-10">
+        <h2 class="text-lg font-bold mb-3">Meine Tipps</h2>
+        <div id="my-list" class="grid gap-3 sm:grid-cols-2"></div>
+        <p id="my-empty" class="text-sm text-slate-500 hidden">Noch keine Teilnahme – tritt oben einem Pool bei.</p>
+      </section>
+    </div>
   </main>
 
   <footer class="text-center text-xs text-slate-400 py-6">

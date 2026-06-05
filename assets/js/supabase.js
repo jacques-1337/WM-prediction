@@ -21,17 +21,30 @@
   window.DB = {
     client,
 
+    // --- Konto / Anmeldung (RPC) ---
+    // Passwort geht per HTTPS an die DB, wird dort sofort bcrypt-gehasht;
+    // zurück kommt ein langlebiges Session-Token (für localStorage via Auth).
+    register: (username, password) =>
+      rpc("wm_register", { p_username: username, p_password: password }),
+    login: (username, password) =>
+      rpc("wm_login", { p_username: username, p_password: password }),
+    sessionUser: (token) => rpc("wm_session_user", { p_token: token }),
+    logout: (token) => rpc("wm_logout", { p_token: token }),
+    myPools: (token) => rpc("wm_my_pools", { p_token: token }),
+
     // --- Pools / Beitritt (RPC) ---
     createPool: (name, lockAt) =>
       rpc("wm_create_pool", { p_name: name, p_lock_at: lockAt || null }),
     getPoolByCode: (code) => rpc("wm_get_pool_by_code", { p_code: code }),
     getPool: (id) => rpc("wm_get_pool", { p_id: id }),
-    joinPool: (code, name) => rpc("wm_join_pool", { p_code: code, p_name: name }),
+    // Beitritt nutzt den Kontonamen automatisch – nur Code nötig (Token-geschützt).
+    joinPool: (token, code) => rpc("wm_join_pool", { p_token: token, p_code: code }),
 
-    // --- Tipp (RPC, Token-geschützt) ---
-    getMine: (token) => rpc("wm_get_mine", { p_token: token }),
-    savePrediction: (token, payload) =>
-      rpc("wm_save_prediction", { p_token: token, p_payload: payload }),
+    // --- Tipp (RPC, Token-geschützt, pro Pool) ---
+    getMine: (token, poolId) =>
+      rpc("wm_get_mine", { p_token: token, p_pool_id: poolId }),
+    savePrediction: (token, poolId, payload) =>
+      rpc("wm_save_prediction", { p_token: token, p_pool_id: poolId, p_payload: payload }),
 
     // --- Admin (RPC, Passwort-geschützt) ---
     setResults: (secret, payload) =>
