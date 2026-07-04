@@ -178,6 +178,73 @@ window.WMCore = (function () {
     };
   }
 
+  /*
+   * Fakten aus dem ECHTEN Ergebnis-Payload für Wertung & Markierung:
+   * - enteredGroups: als "gewertet" markierte Gruppen (doneGroups, sonst Keys)
+   * - reached[r]:    Teams, die Runde r nachweislich erreicht haben
+   * - eliminated[r]: Teams, die Runde r nachweislich NICHT mehr erreichen können
+   * Alles andere ist "noch offen" (weder reached noch eliminated) – teilweise
+   * eingetragene Runden markieren unentschiedene Spiele also neutral.
+   */
+  function resultInfo(actual) {
+    const raw = actual || {};
+    const rawGroups = raw.groups || {};
+    const doneKeys = Array.isArray(raw.doneGroups) ? raw.doneGroups : Object.keys(rawGroups);
+    const enteredGroups = new Set(doneKeys.filter(
+      (g) => Array.isArray(rawGroups[g]) && rawGroups[g].length === 4));
+
+    const groupOrder = {};
+    enteredGroups.forEach((g) => (groupOrder[g] = rawGroups[g].slice()));
+
+    const rawThirds = Array.isArray(raw.thirds) ? raw.thirds : [];
+    const thirdsSet = new Set(rawThirds);
+    const thirdsComplete = rawThirds.length === 8;
+
+    const A = ensure(JSON.parse(JSON.stringify(raw)));
+    const sets = reachedSets(A);
+    const b = computeBracket(A);
+
+    const reached = {
+      r32: new Set(), r16: sets.r16, qf: sets.qf, sf: sets.sf, final: sets.final,
+      champion: sets.champion,
+    };
+    const eliminated = {
+      r32: new Set(), r16: null, qf: null, sf: null, final: null, champion: null,
+    };
+
+    enteredGroups.forEach((g) => {
+      const order = groupOrder[g];
+      reached.r32.add(order[0]);
+      reached.r32.add(order[1]);
+      eliminated.r32.add(order[3]); // Gruppenletzter ist sicher raus
+      // Dritter erst sicher raus, wenn alle 8 besten Dritten feststehen
+      if (thirdsComplete && !thirdsSet.has(order[2])) eliminated.r32.add(order[2]);
+    });
+    rawThirds.forEach((code) => reached.r32.add(code));
+
+    // Verlierer entschiedener Spiele je Runde (kumulativ nach oben gereicht).
+    // Nur Spiele mit eingetragenem Sieger UND bekannten Teilnehmern zählen.
+    function losers(matches, guard) {
+      const out = [];
+      matches.forEach((m) => {
+        if (!m.winner || !m.a || !m.b) return;
+        const l = m.winner === m.a ? m.b : m.a;
+        if (!guard || guard.has(l)) out.push(l);
+      });
+      return out;
+    }
+    const union = (set, arr) => { const s = new Set(set); arr.forEach((c) => s.add(c)); return s; };
+
+    eliminated.r16 = union(eliminated.r32, losers(b.r32, reached.r32));
+    eliminated.qf = union(eliminated.r16, losers(b.r16));
+    eliminated.sf = union(eliminated.qf, losers(b.qf));
+    eliminated.final = union(eliminated.sf, losers(b.sf));
+    const finalLoser = losers([b.final]);
+    eliminated.champion = union(eliminated.final, finalLoser);
+
+    return { enteredGroups, groupOrder, thirdsSet, thirdsComplete, reached, eliminated };
+  }
+
   // Fortschritt (für Anzeige "x/ y gesetzt")
   function progress(payload) {
     ensure(payload);
@@ -199,7 +266,7 @@ window.WMCore = (function () {
 
   return {
     emptyPrediction, ensure, normalize, computeBracket,
-    r32Participants, assignThirds, reachedSets, progress,
+    r32Participants, assignThirds, reachedSets, resultInfo, progress,
     slotLabel, groupRank,
   };
 })();

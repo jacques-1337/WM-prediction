@@ -16,10 +16,20 @@ window.Scoring = (function () {
       Object.keys(ko.qf || {}).length || Object.keys(ko.sf || {}).length || ko.champion) ? true : false;
   }
 
+  // Gruppen, die als "gewertet" gelten: bevorzugt der explizite doneGroups-
+  // Marker aus dem Admin (verhindert, dass per ensure() aufgefüllte Default-
+  // Reihenfolgen Punkte erzeugen), sonst Fallback auf die vorhandenen Keys.
+  function enteredGroups(actual) {
+    const rawGroups = (actual && actual.groups) || {};
+    const keys = Array.isArray(actual && actual.doneGroups)
+      ? actual.doneGroups : Object.keys(rawGroups);
+    return keys.filter((g) => Array.isArray(rawGroups[g]) && rawGroups[g].length === 4);
+  }
+
   // Sind überhaupt schon echte Ergebnisse eingetragen?
   function hasResults(actual) {
     if (!actual) return false;
-    const g = actual.groups && Object.keys(actual.groups).length > 0;
+    const g = enteredGroups(actual).length > 0;
     const t = actual.thirds && actual.thirds.length > 0;
     return !!(g || t || hasKo(actual.ko));
   }
@@ -28,9 +38,9 @@ window.Scoring = (function () {
   function scoreDetailed(prediction, actual) {
     const S = WM.SCORING;
 
-    // Welche Gruppen hat der Admin wirklich eingetragen? (vor jeglichem Auffüllen)
+    // Welche Gruppen hat der Admin wirklich gewertet? (vor jeglichem Auffüllen)
     const rawGroups = (actual && actual.groups) || {};
-    const presentGroups = Object.keys(rawGroups);
+    const presentGroups = enteredGroups(actual);
     const rawThirds = (actual && actual.thirds) || [];
 
     const P = Core.ensure(clone(prediction));
@@ -80,5 +90,5 @@ window.Scoring = (function () {
     r16: "Achtelfinale", qf: "Viertelfinale", sf: "Halbfinale", final: "Finalisten", champion: "Weltmeister",
   };
 
-  return { score, scoreDetailed, hasResults, LABELS };
+  return { score, scoreDetailed, hasResults, enteredGroups, LABELS };
 })();

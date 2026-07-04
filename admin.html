@@ -22,11 +22,14 @@
   <!-- Speicherleiste -->
   <div class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200">
     <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-3 flex-wrap">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <input id="admin-pw" type="password" placeholder="Admin-Passwort"
           class="rounded border border-slate-300 px-3 py-1.5 text-sm" />
         <button id="save-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded px-4 py-1.5 text-sm">
           Ergebnisse speichern
+        </button>
+        <button id="load-live-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded px-4 py-1.5 text-sm">
+          📥 Echte Ergebnisse laden
         </button>
       </div>
       <span id="save-status" class="text-xs text-slate-400"></span>
@@ -39,6 +42,10 @@
       die 8 weitergekommenen Dritten und die Sieger aller K.-o.-Runden bis zum Weltmeister.
       Speichere am besten erst, wenn die Gruppenphase abgeschlossen ist; die K.-o.-Sieger kannst du
       danach laufend nachtragen. Die Rangliste der Pools aktualisiert sich automatisch.
+      <br /><b>📥 Echte Ergebnisse laden</b> füllt alles bis zum aktuellen Stand vor (danach nur noch
+      prüfen, Passwort eingeben und speichern). Zum Nachtragen der weiteren Runden:
+      <a class="underline font-medium" href="https://www.fotmob.com/de/leagues/77/overview/world-cup"
+        target="_blank" rel="noopener">Spielplan &amp; Ergebnisse auf FotMob</a>.
     </div>
     <div id="loading" class="text-slate-500 py-12 text-center">Lade aktuelle Ergebnisse …</div>
     <div id="editor"></div>
@@ -48,6 +55,7 @@
   <script src="assets/js/common.js"></script>
   <script src="assets/js/supabase.js"></script>
   <script src="assets/js/bracket-core.js"></script>
+  <script src="assets/js/results-live.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
   <script src="assets/js/bracket-editor.js"></script>
   <script src="assets/js/admin.js"></script>

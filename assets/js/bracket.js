@@ -86,9 +86,18 @@
       $("#lock-banner").classList.add("hidden");
     }
 
+    // Nach dem Anpfiff: eigenen Tipp gegen die echten Ergebnisse markieren
+    let compare = null;
+    if (meta.locked) {
+      try {
+        const res = await window.DB.getResults();
+        if (res && res.payload && window.Scoring.hasResults(res.payload)) compare = res.payload;
+      } catch (e) { /* Ergebnisse optional – Anzeige funktioniert auch ohne */ }
+    }
+
     $("#loading").classList.add("hidden");
     renderProgress(payload);
-    window.BracketEditor.mount($("#editor"), { payload, readOnly: meta.locked, onChange });
+    window.BracketEditor.mount($("#editor"), { payload, readOnly: meta.locked, onChange, compare });
   }
 
   document.addEventListener("DOMContentLoaded", init);

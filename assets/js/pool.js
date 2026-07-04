@@ -75,7 +75,7 @@
 
     c.appendChild(el("h2", { class: "text-lg font-bold mb-3", text: "Rangliste" }));
     const list = el("div", { class: "space-y-2" });
-    rows.forEach((r, i) => list.appendChild(leaderRow(r, i + 1, resultsEntered)));
+    rows.forEach((r, i) => list.appendChild(leaderRow(r, i + 1, resultsEntered, results)));
     c.appendChild(list);
 
     if (resultsEntered) {
@@ -94,7 +94,7 @@
     }
   }
 
-  function leaderRow(r, rank, showPoints) {
+  function leaderRow(r, rank, showPoints, results) {
     const card = el("div", { class: "rounded-xl border border-slate-200 bg-white overflow-hidden" });
     const head = el("div", { class: "flex items-center gap-3 px-4 py-3" });
     head.appendChild(el("span", { class: "w-7 text-center font-extrabold " + (rank <= 3 ? "text-amber-500" : "text-slate-400"), text: rank + "." }));
@@ -117,25 +117,34 @@
       body.classList.toggle("hidden");
       toggle.textContent = body.classList.contains("hidden") ? "Tipp ansehen" : "einklappen";
       if (!mounted && !body.classList.contains("hidden")) {
-        if (showPoints) body.appendChild(breakdown(r.parts));
-        const ed = el("div", {});
-        body.appendChild(ed);
-        window.BracketEditor.mount(ed, { payload: r.payload, readOnly: true });
+        // Kompakte Zusammenfassung statt des riesigen Turnierbaums:
+        // Gruppen + getippte Teams je Runde als Chips, Punkte je Abschnitt.
+        const sum = el("div", {});
+        body.appendChild(sum);
+        window.TipSummary.mount(sum, {
+          payload: r.payload,
+          results: showPoints ? results : null,
+          parts: showPoints ? r.parts : null,
+        });
+
+        // Der volle Baum bleibt auf Wunsch erreichbar (lazy gemountet).
+        const det = el("details", { class: "mt-3" });
+        det.appendChild(el("summary", { class: "cursor-pointer text-xs font-semibold text-blue-700", text: "Kompletten Turnierbaum anzeigen" }));
+        const ed = el("div", { class: "mt-2" });
+        let treeMounted = false;
+        det.addEventListener("toggle", () => {
+          if (det.open && !treeMounted) {
+            window.BracketEditor.mount(ed, { payload: r.payload, readOnly: true, compare: showPoints ? results : null });
+            treeMounted = true;
+          }
+        });
+        det.appendChild(ed);
+        body.appendChild(det);
         mounted = true;
       }
     });
     card.appendChild(body);
     return card;
-  }
-
-  function breakdown(parts) {
-    const wrap = el("div", { class: "flex flex-wrap gap-2 mb-3 text-xs" });
-    Object.keys(parts).forEach((k) => {
-      if (!parts[k]) return;
-      wrap.appendChild(el("span", { class: "bg-white border border-slate-200 rounded px-2 py-1", text: Scoring.LABELS[k] + ": " + parts[k] }));
-    });
-    if (!wrap.children.length) wrap.appendChild(el("span", { class: "text-slate-400", text: "Noch keine Punkte." }));
-    return wrap;
   }
 
   async function init() {
@@ -162,11 +171,34 @@
 
     if (!pool.locked) { renderPreLock(participants); return; }
 
-    let predictions = [], results = { payload: {}, updated_at: null };
+    let predictions, results = { payload: {}, updated_at: null };
     try {
       predictions = await window.DB.listPredictions(poolId);
+    } catch (e) {
+      // Kein Fake-Leaderboard mit 0 Punkten anzeigen, sondern den Fehler benennen.
+      // Bekannte Ursache 42501: anon fehlt das Leserecht auf wm_pools
+      // (RLS-Subselect) -> Admin muss supabase/fix-rls.sql ausführen.
+      $("#banner").innerHTML =
+        '<div class="rounded-xl bg-rose-50 border border-rose-200 p-4 text-rose-800 text-sm">' +
+        "⚠️ Die Tipps konnten nicht geladen werden: " + e.message +
+        ".<br>Die Rangliste kann deshalb nicht angezeigt werden. " +
+        "Admin: SQL-Fix in <code>supabase/fix-rls.sql</code> im Supabase-Dashboard ausführen.</div>";
+      const c = $("#content");
+      c.innerHTML = "";
+      c.appendChild(el("h2", { class: "text-lg font-bold mb-3", text: "Teilnehmer" }));
+      const grid = el("div", { class: "grid gap-2 sm:grid-cols-2 lg:grid-cols-3" });
+      participants.forEach((p) => {
+        grid.appendChild(el("div", { class: "rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm flex items-center gap-2" }, [
+          el("span", { class: "text-slate-400", text: "👤" }),
+          el("span", { text: p.display_name }),
+        ]));
+      });
+      c.appendChild(grid);
+      return;
+    }
+    try {
       results = await window.DB.getResults();
-    } catch (e) { toast(e.message, "err"); }
+    } catch (e) { toast("Ergebnisse konnten nicht geladen werden: " + e.message, "err"); }
     renderLeaderboard(participants, predictions, results);
   }
 

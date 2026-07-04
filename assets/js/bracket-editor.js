@@ -1,9 +1,12 @@
 /*
  * bracket-editor.js – wiederverwendbarer Tipp-/Ergebnis-Editor (DOM).
- * Nutzung:  const ctl = BracketEditor.mount(rootEl, { payload, readOnly, onChange });
+ * Nutzung:  const ctl = BracketEditor.mount(rootEl, { payload, readOnly, onChange, compare, resultsMode });
  *   payload   – Tipp-/Ergebnis-Objekt (siehe bracket-core.js); Standard = leer
  *   readOnly  – true: nur Anzeige (Pool-Ansicht)
  *   onChange(payload) – wird nach jeder Änderung aufgerufen (zum Speichern/Status)
+ *   compare   – echtes Ergebnis-Payload: markiert den Tipp grün/gelb/rot
+ *               (Gruppen: Platz exakt / 1 daneben / falsch; KO: erreicht / raus)
+ *   resultsMode – true nur im Admin: Checkbox "Gruppe gewertet" (payload.doneGroups)
  */
 window.BracketEditor = (function () {
   "use strict";
@@ -19,6 +22,8 @@ window.BracketEditor = (function () {
       payload: Core.ensure(opts.payload || Core.emptyPrediction()),
       readOnly: !!opts.readOnly,
       onChange: opts.onChange || function () {},
+      cmp: opts.compare ? Core.resultInfo(opts.compare) : null,
+      resultsMode: !!opts.resultsMode,
     };
     Core.normalize(state.payload);
 
@@ -52,6 +57,14 @@ window.BracketEditor = (function () {
       groupsWrap.appendChild(el("p", { class: "text-sm text-slate-500 mb-4",
         text: state.readOnly ? "Getippte Endplatzierung der Gruppen."
           : "Ziehe die Teams am Griff ⠿ in die getippte Reihenfolge (1.–4.). Hake bei den Gruppen­dritten an, wer als einer der 8 besten Dritten weiterkommt." }));
+      if (state.cmp) {
+        const lg = el("div", { class: "cmp-legend" });
+        lg.appendChild(el("span", { class: "lg-exact", text: "● Platz exakt getroffen" }));
+        lg.appendChild(el("span", { class: "lg-close", text: "● 1 Platz daneben" }));
+        lg.appendChild(el("span", { class: "lg-off", text: "● daneben" }));
+        lg.appendChild(el("span", { text: "ohne Farbe: Gruppe noch nicht gewertet" }));
+        groupsWrap.appendChild(lg);
+      }
       const grid = el("div", { class: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" });
       WM.GROUP_LETTERS.forEach((g) => grid.appendChild(groupCard(g)));
       groupsWrap.appendChild(grid);
@@ -80,20 +93,59 @@ window.BracketEditor = (function () {
           onEnd: () => applyOrder(g, list),
         });
       }
+      if (state.resultsMode) {
+        const done = Array.isArray(state.payload.doneGroups) && state.payload.doneGroups.indexOf(g) !== -1;
+        const foot = el("label", { class: "grp-done" });
+        const cb = el("input", { type: "checkbox", class: "w-4 h-4 accent-emerald-600" });
+        cb.checked = done;
+        cb.addEventListener("change", () => toggleDoneGroup(g, cb.checked));
+        foot.appendChild(cb);
+        foot.appendChild(el("span", { text: "Gruppe gewertet (zählt für Punkte)" }));
+        card.appendChild(foot);
+        if (done) card.classList.add("ring-2", "ring-emerald-300");
+      }
       return card;
     }
 
+    // Admin: Gruppe als "gewertet" markieren -> nur diese Gruppen geben Punkte.
+    function toggleDoneGroup(g, checked) {
+      if (!Array.isArray(state.payload.doneGroups)) state.payload.doneGroups = [];
+      const list = state.payload.doneGroups;
+      const pos = list.indexOf(g);
+      if (checked && pos === -1) list.push(g);
+      if (!checked && pos !== -1) list.splice(pos, 1);
+      commit(true);
+    }
+
     function groupRow(g, code, idx) {
-      const cls = idx <= 1 ? "adv" : (idx === 2 ? "third" : "out"); // 1./2.=grün, 3.=gelb, 4.=rot
+      // Vergleichsmodus: Korrektheit statt Position färben (nur gewertete Gruppen)
+      const cmpDone = state.cmp && state.cmp.enteredGroups.has(g);
+      let cls, actualIdx = -1;
+      if (cmpDone) {
+        actualIdx = state.cmp.groupOrder[g].indexOf(code);
+        cls = actualIdx === idx ? "cmp-exact" : (Math.abs(actualIdx - idx) === 1 ? "cmp-close" : "cmp-off");
+      } else {
+        cls = idx <= 1 ? "adv" : (idx === 2 ? "third" : "out"); // 1./2.=grün, 3.=gelb, 4.=rot
+      }
       const row = el("div", { class: "grp-row " + cls, "data-code": code });
       row.appendChild(el("span", { class: "w-5 text-slate-400 text-sm font-semibold", text: (idx + 1) + "." }));
       if (!state.readOnly) row.appendChild(el("span", { class: "drag-handle", title: "ziehen zum Sortieren", text: "⠿" }));
       row.appendChild(flagImg(code));
       row.appendChild(el("span", { class: "flex-1 text-sm truncate", text: WM.teamName(code) }));
+      if (cmpDone && actualIdx !== idx) {
+        row.appendChild(el("span", { class: "cmp-pos", text: actualIdx === -1 ? "tats. —" : "tats. " + (actualIdx + 1) + "." }));
+      }
       if (idx === 2) {
         if (state.readOnly) {
           const adv = (state.payload.thirds || []).indexOf(code) !== -1;
-          row.appendChild(el("span", { class: "text-xs font-semibold " + (adv ? "text-emerald-600" : "text-slate-300"), text: adv ? "weiter ✓" : "raus" }));
+          let clr = adv ? "text-emerald-600" : "text-slate-300";
+          if (state.cmp && adv) {
+            // Faktencheck des getippten Dritten: weiter (grün), sicher raus (rot), offen (grau)
+            if (state.cmp.thirdsSet.has(code)) clr = "text-emerald-600";
+            else if (state.cmp.thirdsComplete) clr = "text-rose-600 line-through";
+            else clr = "text-slate-400";
+          }
+          row.appendChild(el("span", { class: "text-xs font-semibold " + clr, text: adv ? "weiter ✓" : "raus" }));
         } else {
           const cb = el("input", { type: "checkbox", class: "w-4 h-4 accent-blue-600 ml-1", title: "kommt als bester Dritter weiter" });
           cb.checked = (state.payload.thirds || []).indexOf(code) !== -1;
@@ -141,8 +193,14 @@ window.BracketEditor = (function () {
 
     function legend() {
       const wrap = el("div", { class: "ko-legend" });
-      wrap.appendChild(el("span", { class: "lg lg-win", text: "● kommt weiter" }));
-      wrap.appendChild(el("span", { class: "lg lg-lose", text: "● scheidet aus" }));
+      if (state.cmp) {
+        wrap.appendChild(el("span", { class: "lg lg-win", text: "● tatsächlich erreicht" }));
+        wrap.appendChild(el("span", { class: "lg lg-lose", text: "● ausgeschieden" }));
+        wrap.appendChild(el("span", { class: "lg", text: "ohne Farbe: noch offen · ✓/✗ = dein Tipp" }));
+      } else {
+        wrap.appendChild(el("span", { class: "lg lg-win", text: "● kommt weiter" }));
+        wrap.appendChild(el("span", { class: "lg lg-lose", text: "● scheidet aus" }));
+      }
       return wrap;
     }
 
@@ -163,8 +221,9 @@ window.BracketEditor = (function () {
       const b = Core.computeBracket(state.payload);
       const ord = treeOrder();
 
-      const r32Desc = (i) => { const m = b.r32[i]; return { a: m.a, b: m.b, aLabel: m.aLabel, bLabel: m.bLabel, winner: m.winner, pick: (c) => setR32(m.id, c) }; };
-      const rndDesc = (round, i) => { const m = b[round][i]; return { a: m.a, b: m.b, winner: m.winner, pick: (c) => setRound(round, i, c) }; };
+      // "round" = Runde, die die Teams in diesem Spiel ERREICHT haben (für Vergleich).
+      const r32Desc = (i) => { const m = b.r32[i]; return { a: m.a, b: m.b, aLabel: m.aLabel, bLabel: m.bLabel, winner: m.winner, round: "r32", pick: (c) => setR32(m.id, c) }; };
+      const rndDesc = (round, i) => { const m = b[round][i]; return { a: m.a, b: m.b, winner: m.winner, round: round, pick: (c) => setRound(round, i, c) }; };
 
       const tree = el("div", { class: "ko-tree" });
 
@@ -216,9 +275,16 @@ window.BracketEditor = (function () {
       center.appendChild(el("div", { class: "col-title", text: "Finale" }));
       const cbody = el("div", { class: "col-body center-body" });
       cbody.appendChild(el("div", { class: "trophy", text: "🏆" }));
-      cbody.appendChild(matchCard({ a: b.final.a, b: b.final.b, winner: b.final.winner, pick: (c) => setChampion(c) }));
+      cbody.appendChild(matchCard({ a: b.final.a, b: b.final.b, winner: b.final.winner, round: "final", pick: (c) => setChampion(c) }));
       const champ = state.payload.ko.champion;
-      cbody.appendChild(el("div", { class: "champ" + (champ ? " on" : ""),
+      let champCls = champ ? " on" : "";
+      if (state.cmp && champ) {
+        // Faktencheck Weltmeister-Tipp: richtig (grün), sicher falsch (rot), offen (neutral)
+        if (state.cmp.reached.champion === champ) champCls = " on";
+        else if (state.cmp.reached.champion || state.cmp.eliminated.champion.has(champ)) champCls = " off";
+        else champCls = "";
+      }
+      cbody.appendChild(el("div", { class: "champ" + champCls,
         text: champ ? "🏆 " + WM.teamName(champ) : "Weltmeister?" }));
       center.appendChild(cbody);
       tree.appendChild(center);
@@ -252,7 +318,17 @@ window.BracketEditor = (function () {
       const decided = !!mt.winner;
       const isWin = code && mt.winner === code;        // weiter -> grün
       const isLose = code && decided && mt.winner !== code; // raus -> rot
-      const row = el("div", { class: "team-row" + (isWin ? " winner" : "") + (isLose ? " loser" : "") + ((!code || state.readOnly) ? " disabled" : "") });
+      let cls = (isWin ? " winner" : "") + (isLose ? " loser" : "");
+      if (state.cmp) {
+        // Vergleichsmodus: Farben zeigen die REALITÄT (Runde erreicht / raus),
+        // die ✓/✗-Häkchen weiterhin den Tipp. Offen = neutral.
+        cls = "";
+        if (code && mt.round) {
+          if (state.cmp.reached[mt.round].has(code)) cls = " cmp-hit";
+          else if (state.cmp.eliminated[mt.round].has(code)) cls = " cmp-miss";
+        }
+      }
+      const row = el("div", { class: "team-row" + cls + ((!code || state.readOnly) ? " disabled" : "") });
       if (code) {
         row.appendChild(flagImg(code));
         row.appendChild(el("span", { class: "nm text-sm", text: WM.teamName(code) }));

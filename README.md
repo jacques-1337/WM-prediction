@@ -45,8 +45,8 @@ nutzen also gleichzeitig. Zum Tippen kein Login nötig.
 
 | Kategorie | Punkte |
 |-----------|--------|
-| Gruppensieger korrekt | 3 |
-| Gruppenzweiter korrekt | 2 |
+| Gruppenplatz exakt getippt (je Team, Platz 1–4) | 3 |
+| Genau 1 Platz daneben (je Team) | 1 |
 | Weitergekommener Gruppendritter korrekt | 1 |
 | Team erreicht Achtelfinale | 1 |
 | Team erreicht Viertelfinale | 2 |
@@ -54,7 +54,13 @@ nutzen also gleichzeitig. Zum Tippen kein Login nötig.
 | Team erreicht Finale | 6 |
 | Weltmeister korrekt | 10 |
 
-Gewertet wird je Runde über die **Menge der Teams**, die sie erreichen (Tipp vs. Realität).
+Maximal **222 Punkte**. Gruppen zählen erst, wenn sie in `admin.html` den Haken
+**„Gruppe gewertet“** haben. Die K.-o.-Runden werden je Runde über die **Menge der
+Teams** gewertet, die sie erreichen (Tipp vs. Realität) – dadurch bleibt die Wertung
+fair, egal welche Paarungs-Konstellation sich aus den echten Gruppenergebnissen ergibt.
+In der Pool-Ansicht wird jeder Tipp gegen die echten Ergebnisse markiert:
+**grün** = Platz exakt / Runde tatsächlich erreicht, **gelb** = 1 Platz daneben,
+**rot** = falsch bzw. ausgeschieden, ohne Farbe = noch offen.
 
 ## Konfiguration
 
